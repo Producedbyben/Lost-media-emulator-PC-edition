@@ -2781,10 +2781,13 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
 }
 
 (function boot() {
-  const renderer = new CRTRenderer();
+  const renderer = (window.CRTRendererGPU && window.CRTRendererGPU.isSupported())
+    ? new window.CRTRendererGPU()
+    : new CRTRenderer();
   const canvas = document.getElementById("previewCanvas");
   const ctx = canvas.getContext("2d", { alpha: false, desynchronized: true });
   const statusEl = document.getElementById("status");
+  const usingGpuRenderer = typeof renderer.render === "function" && renderer.constructor?.name === "CRTRendererGPU";
   const progressEl = document.getElementById("progress");
   const previewBuffer = document.createElement("canvas");
   const exportBtn = document.getElementById("exportBtn");
@@ -3460,6 +3463,12 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     statusEl.dataset.mode = mode;
   }
 
+  function updateRendererModeBadge() {
+    const mode = usingGpuRenderer ? "GPU (WebGL2)" : "CPU (Canvas2D)";
+    const accel = usingGpuRenderer ? "Hardware accelerated preview enabled." : "GPU unavailable, using CPU fallback.";
+    setStatus(`${mode} renderer active. ${accel}`, usingGpuRenderer ? "success" : "warn");
+  }
+
   function setExportAvailability() {
     exportBtn.disabled = !hasLoadedSource || isExporting;
     if (downloadStillBtn) downloadStillBtn.disabled = !hasLoadedSource || isExporting;
@@ -3780,6 +3789,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     progressEl.value = 0;
     markPreviewDirty();
     setExportAvailability();
+    updateRendererModeBadge();
     setCompareState(false, { lock: false });
 
     if (!silent) {
@@ -4762,6 +4772,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
   setupDensityMode();
 
   setExportAvailability();
+  updateRendererModeBadge();
   loadParameterPolicyState();
   buildMacroPolicyControls();
 
@@ -4784,5 +4795,6 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
 
 
   setStatus("Load an image or video (MP4/WebM/MOV/etc.) to begin.", "info");
+  updateRendererModeBadge();
   requestAnimationFrame(animate);
 })();
