@@ -2781,10 +2781,14 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
 }
 
 (function boot() {
-  const renderer = new CRTRenderer();
+  const cpuRenderer = new CRTRenderer();
+  const gpuSupported = !!(window.CRTRendererGPU && window.CRTRendererGPU.isSupported());
+  const gpuRenderer = gpuSupported ? new window.CRTRendererGPU() : null;
+  let renderer = gpuRenderer || cpuRenderer;
   const canvas = document.getElementById("previewCanvas");
   const ctx = canvas.getContext("2d", { alpha: false, desynchronized: true });
   const statusEl = document.getElementById("status");
+  const isGpuActive = () => renderer === gpuRenderer;
   const progressEl = document.getElementById("progress");
   const previewBuffer = document.createElement("canvas");
   const exportBtn = document.getElementById("exportBtn");
@@ -3460,6 +3464,36 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     statusEl.dataset.mode = mode;
   }
 
+  function updateRendererModeBadge() {
+    const mode = isGpuActive() ? "GPU (WebGL2)" : "CPU (Canvas2D)";
+    const accel = isGpuActive()
+      ? "GPU shader preview active; final encode still depends on WebCodecs/MediaRecorder."
+      : (gpuSupported ? "Manual CPU mode selected for maximum effect parity." : "GPU unavailable, using CPU fallback.");
+    setStatus(`${mode} renderer active. ${accel}`, isGpuActive() ? "success" : "warn");
+  }
+
+  function switchRenderer(mode = "auto") {
+    const normalized = mode === "gpu" || mode === "cpu" || mode === "auto" ? mode : "auto";
+    if (normalized === "gpu" && !gpuRenderer) {
+      setStatus("GPU mode requested but WebGL2 is unavailable on this system. Staying on CPU.", "warn");
+      renderer = cpuRenderer;
+      return false;
+    }
+
+    if (normalized === "cpu") {
+      renderer = cpuRenderer;
+    } else if (normalized === "gpu") {
+      renderer = gpuRenderer;
+    } else {
+      renderer = gpuRenderer || cpuRenderer;
+    }
+
+    refreshRendererSource();
+    markPreviewDirty();
+    updateRendererModeBadge();
+    return true;
+  }
+
   function setExportAvailability() {
     exportBtn.disabled = !hasLoadedSource || isExporting;
     if (downloadStillBtn) downloadStillBtn.disabled = !hasLoadedSource || isExporting;
@@ -3489,6 +3523,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
   }
 
   let previewModeControl;
+  let rendererBackendControl;
   let previewScaleControl;
   let sourceScaleControl;
   let previewMaxPixelsControl;
@@ -3761,7 +3796,8 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     loadedImage = null;
     loadedSourceType = "image";
     hasLoadedSource = false;
-    renderer.hasImage = false;
+    cpuRenderer.hasImage = false;
+    if (gpuRenderer) gpuRenderer.hasImage = false;
 
     canvas.width = 960;
     canvas.height = 540;
@@ -3780,6 +3816,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     progressEl.value = 0;
     markPreviewDirty();
     setExportAvailability();
+    updateRendererModeBadge();
     setCompareState(false, { lock: false });
 
     if (!silent) {
@@ -4222,7 +4259,8 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
 
     const shouldRender = previewDirty;
     if (shouldRender) {
-      if (showOriginalPreview && renderer.hasImage) {
+      const activeHasImage = !!renderer?.hasImage;
+      if (showOriginalPreview && activeHasImage) {
         const source = loadedSourceType === "video" ? loadedVideo?.video : loadedImage;
         if (source) {
           ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -4564,6 +4602,16 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
     },
   });
 
+  rendererBackendControl = setupSelectionBox("rendererBackend", {
+    onChange: (value) => {
+      const ok = switchRenderer(value);
+      if (!ok && rendererBackendControl?.getValue() !== "cpu") {
+        rendererBackendControl?.setValue("cpu");
+      }
+      progressEl.value = 0;
+    },
+  });
+
   previewScaleControl = setupSelectionBox("previewScale", {
     valueParser: Number,
     onChange: () => {
@@ -4762,6 +4810,7 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
   setupDensityMode();
 
   setExportAvailability();
+  switchRenderer(rendererBackendControl?.getValue() || "auto");
   loadParameterPolicyState();
   buildMacroPolicyControls();
 
@@ -4784,5 +4833,6 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
 
 
   setStatus("Load an image or video (MP4/WebM/MOV/etc.) to begin.", "info");
+  updateRendererModeBadge();
   requestAnimationFrame(animate);
 })();

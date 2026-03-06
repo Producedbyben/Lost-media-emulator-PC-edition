@@ -116,7 +116,7 @@ void main() {
   outColor = vec4(clamp(c, 0.0, 1.0), 1.0);
 }`;
 
-export class CRTRendererGPU {
+class CRTRendererGPU {
   static isSupported() {
     const c = document.createElement("canvas");
     const gl = c.getContext("webgl2", { antialias: false, preserveDrawingBuffer: true });
@@ -151,7 +151,7 @@ export class CRTRendererGPU {
     const scale = Math.max(0.1, Math.min(1, sourceScale || 1));
     this.sourceCanvas.width = Math.max(1, Math.round(inputWidth * scale));
     this.sourceCanvas.height = Math.max(1, Math.round(inputHeight * scale));
-    const ctx = this.sourceCanvas.getContext("2d");
+    const ctx = this.sourceCanvas.getContext("2d", { alpha: false, desynchronized: true });
     ctx.clearRect(0, 0, this.sourceCanvas.width, this.sourceCanvas.height);
     ctx.drawImage(img, 0, 0, inputWidth, inputHeight, 0, 0, this.sourceCanvas.width, this.sourceCanvas.height);
     this.hasImage = true;
@@ -205,3 +205,9 @@ export class CRTRendererGPU {
     outCtx.drawImage(this.canvas, 0, 0, width, height);
   }
 }
+
+if (typeof window !== "undefined") {
+  window.CRTRendererGPU = CRTRendererGPU;
+}
+
+export { CRTRendererGPU };
