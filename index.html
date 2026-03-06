@@ -241,6 +241,13 @@
               <span class="range-control range-control-compact"><input id="previewTime" type="range" min="0" max="0" step="0.01" value="0" disabled /></span>
             </label>
             <label>Preview FPS <input id="previewFps" type="number" value="15" min="1" max="60" /></label>
+            <label>Render backend
+              <div id="rendererBackend" class="selection-box selection-inline" role="radiogroup" aria-label="Renderer backend">
+                <button type="button" data-value="auto" data-selected="true">Auto</button>
+                <button type="button" data-value="gpu">GPU</button>
+                <button type="button" data-value="cpu">CPU</button>
+              </div>
+            </label>
             <label>Preview quality
               <div id="previewMaxPixels" class="selection-box selection-inline" role="radiogroup" aria-label="Preview quality">
                 <button type="button" data-value="307200">Fast</button>

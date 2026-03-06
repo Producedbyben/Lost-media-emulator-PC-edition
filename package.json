@@ -9,7 +9,8 @@
     "dev": "electron .",
     "start": "electron .",
     "dist:win": "electron-builder --win nsis portable",
-    "pack": "electron-builder --dir"
+    "pack": "electron-builder --dir",
+    "package:win-exe": "electron-builder --win --dir"
   },
   "devDependencies": {
     "electron": "^31.2.1",

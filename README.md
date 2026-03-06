@@ -144,3 +144,39 @@ Build outputs are written into `dist/` (NSIS installer + portable `.exe`).
 - **Fallback path:** Canvas2D CPU renderer is still used if WebGL2 is unavailable.
 - **Export:** export flow still relies on browser media APIs (`WebCodecs` / `MediaRecorder`) and remains partly CPU-bound depending on codec + driver support.
 - Hardware encode availability varies by Windows GPU driver and codec support in the embedded Chromium runtime.
+
+
+### Build a runnable Windows `.exe` folder (recommended on Windows 10)
+
+```bash
+npm install
+npm run package:win-exe
+```
+
+This generates a Windows app folder under `dist/win-unpacked/` that contains
+`Lost Media Emulator PC Edition.exe` plus required runtime files.
+
+### Build installer/portable artifacts
+
+```bash
+npm install
+npm run dist:win
+```
+
+This builds NSIS installer + portable artifacts. On Linux/macOS hosts, NSIS finalization may require Wine.
+
+## GPU acceleration: what is fully GPU vs CPU-bound
+
+### Fully GPU-accelerated in this codebase
+- Real-time preview effect shader pass in `CRTRendererGPU` (WebGL2 fragment shader).
+- Canvas compositing path when the renderer backend is set to **GPU** or **Auto** with WebGL2 available.
+
+### CPU-bound (by browser/runtime APIs)
+- Source decode, file I/O, and upload orchestration.
+- MP4/WebM muxing and part of encode control flow (uses `WebCodecs`/`MediaRecorder`).
+- Some export-path overhead, progress bookkeeping, and frame scheduling.
+
+### Practical recommendation
+- Use **GPU backend** for interactive tuning/playback responsiveness.
+- Keep CPU fallback available for compatibility or strict effect parity checks.
+- Expect export speed to depend on driver/hardware codec availability in Chromium/Electron, not only shader speed.
