@@ -110,3 +110,37 @@ This keeps mask semantics aligned to image formation source (display phosphor vs
 4. Temporal flicker and deterministic noise
 
 Export and preview both use deterministic frame timing (`frameIndex / fps`) so visual timing remains consistent.
+
+## Windows desktop app (Electron)
+
+This project now includes a native desktop wrapper and packaging pipeline for Windows.
+
+### Desktop development run
+
+```bash
+npm install
+npm run dev
+```
+
+### Build distributable `.exe`
+
+```bash
+npm install
+npm run dist:win
+```
+
+Build outputs are written into `dist/` (NSIS installer + portable `.exe`).
+
+## Performance upgrades included
+
+- Added a WebGL2 GPU renderer path (`CRTRendererGPU`) and auto-selection at boot.
+- Electron is launched with GPU rasterization and hardware acceleration flags enabled.
+- Preview canvas contexts use low-latency (`desynchronized`) 2D context where supported.
+- Existing CPU renderer remains as a fallback for compatibility and stability.
+
+## GPU acceleration scope and limitations
+
+- **GPU accelerated:** real-time preview pipeline when WebGL2 is available.
+- **Fallback path:** Canvas2D CPU renderer is still used if WebGL2 is unavailable.
+- **Export:** export flow still relies on browser media APIs (`WebCodecs` / `MediaRecorder`) and remains partly CPU-bound depending on codec + driver support.
+- Hardware encode availability varies by Windows GPU driver and codec support in the embedded Chromium runtime.
