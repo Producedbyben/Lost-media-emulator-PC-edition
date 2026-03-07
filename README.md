@@ -165,6 +165,14 @@ npm run dist:win
 
 This builds NSIS installer + portable artifacts. On Linux/macOS hosts, NSIS finalization may require Wine.
 
+### Why there is no `.exe` committed to this repository
+
+Built executables are **generated artifacts** and are not tracked in Git.
+Use one of the commands above (`npm run package:win-exe` or `npm run dist:win`) to create local `.exe` output in `dist/`.
+
+A GitHub Actions workflow is included at `.github/workflows/build-windows-exe.yml` so every PR/push can build Windows artifacts automatically.
+Download the generated `.exe` from the workflow run artifacts.
+
 ## GPU acceleration: what is fully GPU vs CPU-bound
 
 ### Fully GPU-accelerated in this codebase
