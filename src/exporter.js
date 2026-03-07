@@ -1,4 +1,4 @@
-const MP4_MUXER_CDN = "https://cdn.jsdelivr.net/npm/mp4-muxer@5.1.2/build/mp4-muxer.mjs";
+const MP4_MUXER_MODULE_PATH = "../node_modules/mp4-muxer/build/mp4-muxer.mjs";
 
 function downloadBlob(blob, filename) {
   const url = URL.createObjectURL(blob);
@@ -23,7 +23,7 @@ export async function exportMp4({ canvas, renderer, params, fps, duration, onPro
     throw new Error("WebCodecs VideoEncoder is unavailable in this browser/context.");
   }
 
-  const { Muxer, ArrayBufferTarget } = await import(MP4_MUXER_CDN);
+  const { Muxer, ArrayBufferTarget } = await import(MP4_MUXER_MODULE_PATH);
   const width = canvas.width;
   const height = canvas.height;
   const encodedSize = getEvenFrameSize(width, height);

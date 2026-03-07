@@ -1480,7 +1480,7 @@ const FALLBACK_PRESETS = {
   },
 };
 
-const MP4_MUXER_CDN = "https://cdn.jsdelivr.net/npm/mp4-muxer@5.1.2/build/mp4-muxer.mjs";
+const MP4_MUXER_MODULE_PATH = "../node_modules/mp4-muxer/build/mp4-muxer.mjs";
 
 function seededNoise(x, y, frame) {
   const v = Math.sin(x * 12.9898 + y * 78.233 + frame * 19.17) * 43758.5453;
@@ -2564,7 +2564,7 @@ async function exportMp4({ canvas, renderer, params, fps, duration, beforeRender
     throw new Error("WebCodecs VideoEncoder is unavailable in this browser/context.");
   }
 
-  const { Muxer, ArrayBufferTarget } = await import(MP4_MUXER_CDN);
+  const { Muxer, ArrayBufferTarget } = await import(MP4_MUXER_MODULE_PATH);
   const throwIfAborted = () => {
     if (signal?.aborted) {
       throw new DOMException("Export cancelled by user.", "AbortError");
@@ -2781,6 +2781,14 @@ async function exportWebmRealtime({ canvas, renderer, params, fps, duration, loa
 }
 
 (function boot() {
+  if (!window.desktopInfo?.isDesktop) {
+    document.body.innerHTML = `<main style="padding: 24px; font-family: system-ui, sans-serif; color: #f4f4f4; background: #0b0d12; min-height: 100vh;">
+      <h1 style="margin-top: 0;">Desktop app required</h1>
+      <p>This project is now Electron-only. Launch it with <code>npm run dev</code> or build a Windows executable with <code>npm run package:win-exe</code>/<code>npm run dist:win</code>.</p>
+    </main>`;
+    throw new Error("Lost Media Emulator now runs as an Electron desktop app only.");
+  }
+
   const cpuRenderer = new CRTRenderer();
   const gpuSupported = !!(window.CRTRendererGPU && window.CRTRendererGPU.isSupported());
   const gpuRenderer = gpuSupported ? new window.CRTRendererGPU() : null;
