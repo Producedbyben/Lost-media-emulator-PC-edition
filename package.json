@@ -42,5 +42,8 @@
       "allowToChangeInstallationDirectory": true,
       "perMachine": false
     }
+  },
+  "dependencies": {
+    "mp4-muxer": "^5.1.2"
   }
 }

@@ -1,31 +1,37 @@
-# Lost Media Emulator (Local + Static Hosting)
+# Lost Media Emulator PC Edition (Windows Desktop App)
 
-A lightweight browser tool that loads an image, previews an animated lost-media simulation pipeline (including CRT display emulation), and exports an MP4 clip.
+A native Electron desktop application for Windows that loads an image/video source, previews an animated lost-media simulation pipeline (including CRT emulation), and exports MP4/WebM output.
 
-## Open locally
+## Run as a desktop app
 
-### Option A: open directly with `file://`
-1. Double-click `index.html`.
-2. Upload an image.
-3. Tune controls and click **Export MP4**.
-
-### Option B: static server (recommended)
 ```bash
-python -m http.server 8080
+npm install
+npm run dev
 ```
-Then open `http://localhost:8080`.
 
-## Browser requirements
+## Build Windows executable output
 
-- Chromium-based browser recommended (Chrome/Edge 116+ preferred).
-- Requires **WebCodecs** (`VideoEncoder`) for MP4 export.
-- Requires network access the first time to fetch `mp4-muxer` from jsDelivr CDN.
+### Build runnable Windows app folder (`.exe` inside)
+```bash
+npm install
+npm run package:win-exe
+```
 
-## Known limitations
+This generates `dist/win-unpacked/` containing `Lost Media Emulator PC Edition.exe` plus required runtime files.
 
-- `file://` mode can be stricter depending on browser security policies. If export fails in `file://`, use a local HTTP server.
-- H.264 profile/codec support varies by OS/browser build.
-- Large resolutions + long durations are CPU-intensive and may freeze the tab while encoding.
+### Build installer + portable `.exe`
+```bash
+npm install
+npm run dist:win
+```
+
+This generates NSIS installer and portable executable artifacts in `dist/`.
+
+## Platform/runtime requirements
+
+- Windows 10/11 target environment (64-bit recommended).
+- Hardware acceleration and H.264/WebCodecs support depend on GPU drivers and Chromium runtime capabilities.
+- Large resolutions + long durations are CPU/GPU intensive during encoding.
 
 
 ## Included presets
@@ -122,15 +128,6 @@ npm install
 npm run dev
 ```
 
-### Build distributable `.exe`
-
-```bash
-npm install
-npm run dist:win
-```
-
-Build outputs are written into `dist/` (NSIS installer + portable `.exe`).
-
 ## Performance upgrades included
 
 - Added a WebGL2 GPU renderer path (`CRTRendererGPU`) and auto-selection at boot.
@@ -142,28 +139,17 @@ Build outputs are written into `dist/` (NSIS installer + portable `.exe`).
 
 - **GPU accelerated:** real-time preview pipeline when WebGL2 is available.
 - **Fallback path:** Canvas2D CPU renderer is still used if WebGL2 is unavailable.
-- **Export:** export flow still relies on browser media APIs (`WebCodecs` / `MediaRecorder`) and remains partly CPU-bound depending on codec + driver support.
+- **Export:** export flow still relies on Chromium runtime media APIs (`WebCodecs` / `MediaRecorder`) and remains partly CPU-bound depending on codec + driver support.
 - Hardware encode availability varies by Windows GPU driver and codec support in the embedded Chromium runtime.
 
 
-### Build a runnable Windows `.exe` folder (recommended on Windows 10)
+### Why there is no `.exe` committed to this repository
 
-```bash
-npm install
-npm run package:win-exe
-```
+Built executables are **generated artifacts** and are not tracked in Git.
+Use `npm run package:win-exe` or `npm run dist:win` to create local `.exe` output.
 
-This generates a Windows app folder under `dist/win-unpacked/` that contains
-`Lost Media Emulator PC Edition.exe` plus required runtime files.
-
-### Build installer/portable artifacts
-
-```bash
-npm install
-npm run dist:win
-```
-
-This builds NSIS installer + portable artifacts. On Linux/macOS hosts, NSIS finalization may require Wine.
+A GitHub Actions workflow is included at `.github/workflows/build-windows-exe.yml` so every PR/push can build Windows artifacts automatically.
+Download generated `.exe` artifacts from the workflow run artifacts.
 
 ## GPU acceleration: what is fully GPU vs CPU-bound
 
@@ -171,7 +157,7 @@ This builds NSIS installer + portable artifacts. On Linux/macOS hosts, NSIS fina
 - Real-time preview effect shader pass in `CRTRendererGPU` (WebGL2 fragment shader).
 - Canvas compositing path when the renderer backend is set to **GPU** or **Auto** with WebGL2 available.
 
-### CPU-bound (by browser/runtime APIs)
+### CPU-bound (by Chromium/Electron runtime APIs)
 - Source decode, file I/O, and upload orchestration.
 - MP4/WebM muxing and part of encode control flow (uses `WebCodecs`/`MediaRecorder`).
 - Some export-path overhead, progress bookkeeping, and frame scheduling.
